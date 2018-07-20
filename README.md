@@ -1,6 +1,6 @@
 # neo4j-dbcount-report
 
-This is neo4j desktop app which analyzes a neo4j database.
+This is neo4j desktop app which analyses a neo4j database.
 
 * Counts:
   * Nodes
@@ -8,7 +8,7 @@ This is neo4j desktop app which analyzes a neo4j database.
   * Labels
   * Relationship Types
   * Label Combinations
-  * Outgong relationships types per label
+  * Outgong relationship types per label
   * Incoming relationship types per label
   * Label Property Combinations
   * Relationship Property Combinations
