@@ -47,6 +47,6 @@ This is neo4j desktop app which analyzes a neo4j database.
   - 61M Relationships
   - 101 Labels
   - 124 Relationship Types
-  - 324 Label Compbinations
+  - 324 Label Combinations
   
   This analysis has taken ~15 minutes 
