@@ -27,7 +27,8 @@ This is neo4j desktop app which analyzes a neo4j database.
              "appId": "neo4j-dbcount-report",
              "appName": "Database Count Report",
              "packageUrl": "https://neo.jfrog.io/neo/api/npm/npm/neo4j-dbcount-report"
-         }```
+         }
+   ```
 
          
   * Reload the neo4j Desktop
