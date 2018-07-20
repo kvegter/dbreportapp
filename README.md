@@ -50,3 +50,5 @@ This is neo4j desktop app which analyses a neo4j database.
   - 324 Label Combinations
   
   This analysis has taken ~15 minutes 
+  
+  <img src="dbcountreport.png" width="1800px"/>
