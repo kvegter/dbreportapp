@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="lib/dbreport.js"></script>
+    <script src="lib/neo4j-web.min.js"></script>
+    <script src="lib/NeoAccessor.js"></script>
+    <link rel="stylesheet" type="text/css" href="semanticui/semantic.css">
+    <script
+            src="https://code.jquery.com/jquery-3.1.1.min.js"
+            integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+            crossorigin="anonymous"></script>
+    <script src="semanticui/semantic.js"></script>
+    <link href="c3/c3.min.css" rel="stylesheet">
+    <!-- Load d3.js and c3.js -->
+    <script src="d3/d3.min.js" charset="utf-8"></script>
+    <script src="c3/c3.min.js"></script>
+
+    <title>Neo4j Database Count Report</title>
+    <!-- Report formatting styles-->
+    <style type="text/css">
+      .prompt {
+        background-color: lightgray;
+        font-weight: bold;
+        width: 150px;
+      }
+      .colval {
+        width: 200px;
+      }
+      .countDisplay {
+        background-color: lightblue;
+        border: lightgray;
+        border-style: outset;
+      }
+      .lblprompt {
+        background-color: lightblue;
+        border: lightgray;
+        border-style: outset;
+        width: 150px;
+      }
+
+      *, *:before, *:after {
+          box-sizing: inherit;
+      }
+
+      .ct-label.ct-label.ct-horizontal {
+          position: fixed;
+          justify-content: flex-end;
+          text-align: right;
+          transform-origin: 55% 0;
+          transform: translate(0%) rotate(-30deg);
+      }
+
+
+
+    </style>
+</head>
+<body>
+  <form class="ui form" onsubmit="return false">
+    <table>
+        <tr><td><Label>neo instance name</Label></td><td><input class="ui input" id="neoInstanceName"/></td>
+            <td><Label>Sample Treshold</Label></td><td><input id="sampleTreshold" value="10000000"/></td>
+            <td><Label>Max Sample Size</Label></td><td><input id="sampleSize" value="1000000"/></td>
+            <td><Label>Random Factor (bewteen 0 and 1)</Label></td><td><input id="randomFactor" value="0.3"/></td>
+            <td><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" checked="true"/><Label>Analyze Relationship Properties</Label></div></td>
+            <td><button class="ui positive basic button" onClick="doReport();">Run Report</button></td>
+        </tr>
+    </table>
+
+<br/><br/>
+  <div id="testmessage"></div>
+  </form>
+  <div id="reportHeader"></div>
+
+  <div class="ui top attached tabular menu">
+      <a id="first" class="active item" data-tab="first">Summary</a>
+      <a id="second" class="item" data-tab="second">Label Details</a>
+      <a id="third" class="item" data-tab="third">Label Combinations</a>
+      <a id="fourth" class="item" data-tab="fourth">Relationship Details</a>
+      <a id="vijf" class="item" data-tab="vijf">Indexes</a>
+      <a id="zes" class="item" data-tab="zes">Constraints</a>
+      <a id="zeven" class="item" data-tab="zeven">Log</a>
+  </div>
+  <div id="appSummary" class="ui bottom attached active tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+  <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+  <div id="appLabelCombinations" class="ui bottom attached tab segment" data-tab="third" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appLog" class="ui bottom attached tab segment" data-tab="zeven" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <script>
+      $('.menu .item')
+          .tab()
+      ;
+  	var dbreport;
+  	var outp;
+    async function doReport() {
+    	let msg = document.getElementById("testmessage"); 
+    	if (dbreport) {
+    		// analysb
+            // rcds = dbreport.analyseDB("reportContainer","localhost", "neo4j", 10000000, 1000000);
+            //dbreport.runReport("reportContainer");
+            let aInstanceName = document.getElementById("neoInstanceName").value;
+            let aSampleTreshold = Number(document.getElementById("sampleTreshold").value);
+
+            let sSampleSize = Number(document.getElementById("sampleSize").value);
+
+            let aRandomFactor = Number(document.getElementById("randomFactor").value);
+
+            let analyzeRelProps = document.getElementById("analyzeRelProps").checked;
+            let d1 = await dbreport.analyseDB(aSampleTreshold, sSampleSize,aInstanceName, aRandomFactor, analyzeRelProps );
+            dbreport.runReport( aSampleTreshold, sSampleSize, dbreport.dbinfo);
+    	} else {
+	    	msg.innerHTML = 'no report available';
+    	}
+    }
+
+    async function initReport() {
+        if (window.neo4jDesktopApi) {
+            dbreport =  new DBReport(window.neo4jDesktopApi);
+            dummy = await dbreport.init();
+            document.getElementById("neoInstanceName").value = dbreport.graphdb.name;
+        } else {
+            msg.innerHTML = 'no desktop api available';
+        }
+    }
+    initReport();
+</script>
+</body>
+</html>
