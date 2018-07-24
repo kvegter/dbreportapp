@@ -1,6 +1,6 @@
 {
   "name": "neo4j-dbcount-report",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Neo4j Database Count Report",
   "main": "index.html",
   "directories": {

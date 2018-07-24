@@ -6,6 +6,7 @@
     <script src="lib/neo4j-web.min.js"></script>
     <script src="lib/NeoAccessor.js"></script>
     <link rel="stylesheet" type="text/css" href="semanticui/semantic.css">
+
     <script
             src="https://code.jquery.com/jquery-3.1.1.min.js"
             integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
@@ -19,38 +20,47 @@
     <title>Neo4j Database Count Report</title>
     <!-- Report formatting styles-->
     <style type="text/css">
-      .prompt {
-        background-color: lightgray;
-        font-weight: bold;
-        width: 150px;
-      }
-      .colval {
-        width: 200px;
-      }
-      .countDisplay {
-        background-color: lightblue;
-        border: lightgray;
-        border-style: outset;
-      }
-      .lblprompt {
-        background-color: lightblue;
-        border: lightgray;
-        border-style: outset;
-        width: 150px;
+
+      .tooltip { /* hide and position tooltip */
+          top:30px;
+          background-color:lemonchiffon;
+          color:black;
+          border-radius:5px;
+          padding-left: 5px;
+          padding-right: 5px;
+          opacity:0;
+          position:absolute;
+          -webkit-transition: opacity 0.5s;
+          -moz-transition: opacity 0.5s;
+          -ms-transition: opacity 0.5s;
+          -o-transition: opacity 0.5s;
+          transition: opacity 0.5s;
       }
 
-      *, *:before, *:after {
-          box-sizing: inherit;
+      .tooltipth { /* hide and position tooltip */
+          top:-60px;
+          background-color:lemonchiffon;
+          color:black;
+          border-radius:5px;
+          padding-left: 5px;
+          padding-right: 5px;
+          opacity:0;
+          position:absolute;
+          -webkit-transition: opacity 0.5s;
+          -moz-transition: opacity 0.5s;
+          -ms-transition: opacity 0.5s;
+          -o-transition: opacity 0.5s;
+          transition: opacity 0.5s;
       }
 
-      .ct-label.ct-label.ct-horizontal {
-          position: fixed;
-          justify-content: flex-end;
-          text-align: right;
-          transform-origin: 55% 0;
-          transform: translate(0%) rotate(-30deg);
+
+      .hover:hover .tooltip { /* display tooltip on hover */
+          opacity:1;
       }
 
+      .hover:hover .tooltipth { /* display tooltip on hover */
+          opacity:1;
+      }
 
 
     </style>
@@ -58,16 +68,20 @@
 <body>
   <form class="ui form" onsubmit="return false">
     <table>
-        <tr><td><Label>neo instance name</Label></td><td><input class="ui input" id="neoInstanceName"/></td>
-            <td><Label>Sample Treshold</Label></td><td><input id="sampleTreshold" value="10000000"/></td>
-            <td><Label>Max Sample Size</Label></td><td><input id="sampleSize" value="1000000"/></td>
-            <td><Label>Random Factor (bewteen 0 and 1)</Label></td><td><input id="randomFactor" value="0.3"/></td>
-            <td><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" checked="true"/><Label>Analyze Relationship Properties</Label></div></td>
-            <td><button class="ui positive basic button" onClick="doReport();">Run Report</button></td>
+        <tr><td width="210px">Neo4j Desktop instance</td><td align="left"><div class="ui label" id="neoInstanceName"></div></td>
+            <td width="210px">Sample Treshold&nbsp;&nbsp;&nbsp;<a class="circular small blue ui label" onClick="dbreport.showSampleHelp();">?</a></td><td><input id="sampleTreshold" value="10000000"/></td>
+            <td width="210px">Max Sample Size</td><td><input id="sampleSize" value="1000000"/></td>
+            <td width="210px">Random Factor (between 0 and 1)</td><td><input id="randomFactor" value="0.3"/></td>
+        </tr>
+        <tr>
+            <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelProps" type="checkbox" /><Label>Analyze Node Properties</Label></div></td>
+            <td colspan="2"><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" /><Label>Analyze Relationship Properties</Label></div></td>
+            <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" /><Label>Check Label Combinations</Label></div></td>
+            <td colspan="2"><button class="ui positive basic button" onClick="doReport();">Run Report</button></td>
         </tr>
     </table>
-
-<br/><br/>
+<div id="helpDiv"></div>
+<br/>
   <div id="testmessage"></div>
   </form>
   <div id="reportHeader"></div>
@@ -100,15 +114,18 @@
     		// analysb
             // rcds = dbreport.analyseDB("reportContainer","localhost", "neo4j", 10000000, 1000000);
             //dbreport.runReport("reportContainer");
-            let aInstanceName = document.getElementById("neoInstanceName").value;
+            let aInstanceName = document.getElementById("neoInstanceName").innerText;
             let aSampleTreshold = Number(document.getElementById("sampleTreshold").value);
 
             let sSampleSize = Number(document.getElementById("sampleSize").value);
 
             let aRandomFactor = Number(document.getElementById("randomFactor").value);
 
+            let analyzeLabelProps = document.getElementById("analyzeLabelProps").checked;
             let analyzeRelProps = document.getElementById("analyzeRelProps").checked;
-            let d1 = await dbreport.analyseDB(aSampleTreshold, sSampleSize,aInstanceName, aRandomFactor, analyzeRelProps );
+            let analyzeLabelCombo = document.getElementById("analyzeLabelCombo").checked;
+
+            let d1 = await dbreport.analyseDB(aSampleTreshold, sSampleSize, aRandomFactor, analyzeLabelProps, analyzeRelProps, analyzeLabelCombo  );
             dbreport.runReport( aSampleTreshold, sSampleSize, dbreport.dbinfo);
     	} else {
 	    	msg.innerHTML = 'no report available';
@@ -119,9 +136,13 @@
         if (window.neo4jDesktopApi) {
             dbreport =  new DBReport(window.neo4jDesktopApi);
             dummy = await dbreport.init();
-            document.getElementById("neoInstanceName").value = dbreport.graphdb.name;
+            if (dbreport.graphdb) {
+                document.getElementById("neoInstanceName").innerText = dbreport.graphdb.name;
+            } else {
+                document.getElementById("appSummary").innerHTML = "<div class='ui warning message'><div class='header'>WARNING</div><p>No active Database, start a database in the Neo4j Desktop first</p></div>";
+            }
         } else {
-            msg.innerHTML = 'no desktop api available';
+            document.getElementById("appSummary").innerHTML = '<div class=\'ui red message\'><div class=\'header\'>ERROR</div><p>no desktop api available</p></div>';
         }
     }
     initReport();
