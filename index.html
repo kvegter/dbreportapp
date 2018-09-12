@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="vis/vis.js"></script>
+    <link href="vis/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+
     <script src="lib/dbreport.js"></script>
     <script src="lib/neo4j-web.min.js"></script>
     <script src="lib/NeoAccessor.js"></script>
@@ -13,6 +16,7 @@
             crossorigin="anonymous"></script>
     <script src="semanticui/semantic.js"></script>
     <link href="c3/c3.min.css" rel="stylesheet">
+
     <!-- Load d3.js and c3.js -->
     <script src="d3/d3.min.js" charset="utf-8"></script>
     <script src="c3/c3.min.js"></script>
@@ -78,13 +82,18 @@
             <td colspan="2"><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" /><Label>Analyze Relationship Properties</Label></div></td>
             <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" /><Label>Check Label Combinations</Label></div></td>
             <td colspan="2"><button class="ui positive basic button" onClick="doReport();">Run Report</button></td>
-        </tr>
     </table>
 <div id="helpDiv"></div>
 <br/>
   <div id="testmessage"></div>
   </form>
   <div id="reportHeader"></div>
+  <!--  Modal Container -->
+  <div class="ui modal"><i class="close icon"></i>
+      <div class="header" id="modalHeader"></div>
+      <div class="content" id="modalContent"></div>
+  </div>
+
 
   <div class="ui top attached tabular menu">
       <a id="first" class="active item" data-tab="first">Summary</a>
@@ -94,6 +103,7 @@
       <a id="vijf" class="item" data-tab="vijf">Indexes</a>
       <a id="zes" class="item" data-tab="zes">Constraints</a>
       <a id="zeven" class="item" data-tab="zeven">Log</a>
+      <a id="livecount" class="item" data-tab="livecount">Live Count</a>
   </div>
   <div id="appSummary" class="ui bottom attached active tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
   <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
@@ -101,7 +111,28 @@
   <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
   <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
   <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appLiveCountContainer" class="ui bottom attached tab segment" data-tab="livecount" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;">
+      <form class="ui form" onsubmit="return false">
+          <table>
+              <tbody>
+              <tr>
+                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Refresh Counts (sec)</div><input id="liveViewRefreshRate" type="number" value=30 min=5 /></div></td>
+                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Time Window (hours)</div><input id="timeWindow" type="number" value=4 min=1 /></div></td>
+                  <td><button id="btPauseStartLC" class="ui positive basic button" onClick="doPauseStartLiveCount();">Start</button></td>
+                  <td><div class="ui checkbox"><input id="useLogScale" type="checkbox" onChange="doScaleChange();"/><Label>Use Log Scale</Label></div></td>
+                  <td><div class="ui label"><p>Tip: Click on the chart to see the totals on a specific time</p></div></td>
+              </tr>
+              </tbody>
+          </table>
+      </form>
+      Label Live Count<hr/>
+      <div id="clabellivecount"></div>
+      <br/>Relationship Live Count<hr/>
+      <div id="crellivecount"></div>
+  </div>
   <div id="appLog" class="ui bottom attached tab segment" data-tab="zeven" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+
+
   <script>
       $('.menu .item')
           .tab()
@@ -131,6 +162,15 @@
 	    	msg.innerHTML = 'no report available';
     	}
     }
+    function doScaleChange() {
+        dbreport.doScaleChange();
+    }
+
+    function doPauseStartLiveCount() {
+      dbreport.pauseStartLiveCount();
+    }
+
+
 
     async function initReport() {
         if (window.neo4jDesktopApi) {

@@ -1,6 +1,6 @@
 {
   "name": "neo4j-dbcount-report",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Neo4j Database Count Report",
   "main": "index.html",
   "directories": {
@@ -9,8 +9,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Kees Vegter",
+  "license": "MIT",
   "neo4jDesktop": {
     "apiVersion": "^1.2.0"
   , "licenseRequired": false
