@@ -81,44 +81,74 @@
             <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelProps" type="checkbox" /><Label>Analyze Node Properties</Label></div></td>
             <td colspan="2"><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" /><Label>Analyze Relationship Properties</Label></div></td>
             <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" /><Label>Check Label Combinations</Label></div></td>
-            <td colspan="2"><button class="ui positive basic button" onClick="doReport();">Run Report</button></td>
+            <td colspan="2"><button class="ui basic button" onClick="openFilter()"><i class="icon filter"></i>Filter</button>
+            <button class="ui positive basic button" onClick="doReport();"><i class="icon play"></i>Analyze Database</button></td>
     </table>
 <div id="helpDiv"></div>
 <br/>
   <div id="testmessage"></div>
   </form>
-  <div id="reportHeader"></div>
-  <!--  Modal Container -->
-  <div class="ui modal"><i class="close icon"></i>
+  <!--  Modal Containers -->
+  <div class="ui modal" id="simpleModal">
+      <i class="close icon"></i>
       <div class="header" id="modalHeader"></div>
       <div class="content" id="modalContent"></div>
   </div>
 
+  <div class="ui fullscreen modal" id="filterModal">
+
+      <div class="header">Filter Definition</div>
+      <div class="content">
+          <div class='ui grid'>
+              <div class='sixteen wide column'>The Label and RelationshipType filter is used in the Live Count, Model and if applicable in analyzing the properties of Nodes and Relationships. By default all the Labels and Relationships are selected</div>
+          </div>
+          <div class="ui top attached tabular menu">
+              <a id="lblfltr" class="active item" data-tab="lblfltr">Labels</a>
+              <a id="relfltr" class="item" data-tab="relfltr">Relationship Types</a>
+          </div>
+          <div class="ui bottom attached active tab segment" data-tab="lblfltr" >
+              <table><tr>
+                  <td><button class="compact ui basic button" onClick="doResetFilter('label');"><i class="icon check circle outline"></i>All</button></td>
+                  <td><button class="compact ui basic button" onClick="doDeselectAllFilter('label');"><i class="icon circle outline"></i>All</button></td>
+              </tr></table>
+              <div id="labelFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+          </div>
+          <div class="ui bottom attached tab segment" data-tab="relfltr" >
+              <table><tr>
+                  <td><button class="compact ui basic button" onClick="doResetFilter('rel');"><i class="icon check circle outline"></i>All</button></td>
+                  <td><button class="compact ui basic button" onClick="doDeselectAllFilter('rel');"><i class="icon circle outline"></i>All</button></td>
+              </tr></table>
+              <div id="reltypeFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+          </div>
+      </div>
+      <div class="actions">
+          <div class="ui approve button">Close</div>
+      </div>
+  </div>
+
+
 
   <div class="ui top attached tabular menu">
-      <a id="first" class="active item" data-tab="first">Summary</a>
+      <a id="livecount" class="active item" data-tab="livecount">Live Count</a>
+      <a id="first" class="item" data-tab="first">Summary</a>
+      <a id="schema" class="item" data-tab="schema">Model</a>
       <a id="second" class="item" data-tab="second">Label Details</a>
       <a id="third" class="item" data-tab="third">Label Combinations</a>
       <a id="fourth" class="item" data-tab="fourth">Relationship Details</a>
       <a id="vijf" class="item" data-tab="vijf">Indexes</a>
       <a id="zes" class="item" data-tab="zes">Constraints</a>
       <a id="zeven" class="item" data-tab="zeven">Log</a>
-      <a id="livecount" class="item" data-tab="livecount">Live Count</a>
   </div>
-  <div id="appSummary" class="ui bottom attached active tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
-  <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
-  <div id="appLabelCombinations" class="ui bottom attached tab segment" data-tab="third" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appLiveCountContainer" class="ui bottom attached tab segment" data-tab="livecount" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;">
+  <div id="appLiveCountContainer" class="ui bottom attached active tab segment" data-tab="livecount" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;">
       <form class="ui form" onsubmit="return false">
           <table>
               <tbody>
               <tr>
-                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Refresh Counts (sec)</div><input id="liveViewRefreshRate" type="number" value=30 min=5 /></div></td>
-                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Time Window (hours)</div><input id="timeWindow" type="number" value=4 min=1 /></div></td>
-                  <td><button id="btPauseStartLC" class="ui positive basic button" onClick="doPauseStartLiveCount();">Start</button></td>
+                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Refresh Counts (sec)</div><input id="liveViewRefreshRate" type="number" value=10 min=5 /></div></td>
+                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Time Window (hours)</div><input id="timeWindow" type="number" value=1 min=1 /></div></td>
+                  <td><button id="btStartLC" class="ui positive compact basic icon button" onClick="doStartLiveCount();"><i class="icon play"></i></button></td>
+                  <td><button id="btPauseLC" class="ui positive disabled basic compact icon button" onClick="doPauseLiveCount();"><i class="icon pause"></i></button></td>
+                  <td><button id="btStopLC" class="ui negative disabled basic compact icon button" onClick="doStopLiveCount();"><i class="icon stop"></i></button></td>
                   <td><div class="ui checkbox"><input id="useLogScale" type="checkbox" onChange="doScaleChange();"/><Label>Use Log Scale</Label></div></td>
                   <td><div class="ui label"><p>Tip: Click on the chart to see the totals on a specific time</p></div></td>
               </tr>
@@ -130,15 +160,50 @@
       <br/>Relationship Live Count<hr/>
       <div id="crellivecount"></div>
   </div>
+
+  <div id="tabSummary" class="ui bottom attached tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;">
+      <div id="reportHeader"></div>
+      <div id="appSummary"></div>
+  </div>
+  <div id="appSchema" class="ui bottom attached tab segment" data-tab="schema" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;">
+          <table>
+              <tr><td width="43px" valign="top">
+                  <div class="ui form">
+<!--                      <button id="btGraphVis" class="ui basic compact icon button" onClick="dbreport.changeLayout('graph');"><image src="graph.png" width="43px" height="43px" /></button>
+                      <br/><br/> -->
+                      <button id="btH_UDViz" class="ui basic disabled compact icon button" onClick="dbreport.changeLayout('UD')"><image src="hierarchy-td.png" width="43px"></image></button>
+                      <button id="btH_DUViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('DU')"><image src="hierarchy-dt.png" width="43px"></image></button>
+                      <button id="btH_LRViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('LR')"><image src="hierarchy-lr.png" width="43px"></image></button>
+                      <button id="btH_RLViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('RL')"><image src="hierarchy-rl.png" width="43px"></image></button>
+                      <br/><br/>
+                      <button id="btH_DirViz" class="ui disabled toggle compact icon button"  onClick="dbreport.changeLayout('directed')"><label style="font-size: 0.8em">Directed</label></button>
+                      <button id="btH_HubSizeViz" class="ui toggle compact icon button"  onClick="dbreport.changeLayout('hubsize')"><label style="font-size: 0.8em">Hub Size</label></button>
+                      <br/><br/>
+                      <br/><br/>
+                      <button id="btRefresh" class="ui basic compact icon button"  onClick="dbreport.refreshModel();"><image src="refresh.png" width="43px"></image></button>
+                  </div>
+                  <td valign="top" width="601px"><div id="graphID" style="width:1100px; height:600px"></div></td>
+                  <td valign="top" width="300px"><div id="propsID" style="width: 300px; height: 100% ;" ></div></td>
+              </tr>
+          </table>
+      </div>
+
+  </div>
+  <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+  <div id="appLabelCombinations" class="ui bottom attached tab segment" data-tab="third" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+  <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
+
   <div id="appLog" class="ui bottom attached tab segment" data-tab="zeven" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
 
 
   <script>
+      var dbreport;
+      var outp;
       $('.menu .item')
-          .tab()
+          .tab({'onLoad':function(e){if (e == "schema") { dbreport._redrawViz(); }}})
       ;
-  	var dbreport;
-  	var outp;
     async function doReport() {
     	let msg = document.getElementById("testmessage"); 
     	if (dbreport) {
@@ -165,12 +230,41 @@
     function doScaleChange() {
         dbreport.doScaleChange();
     }
+    function doResetFilter(type) {
+        dbreport.liveCountAction("stop");
+        dbreport._initFilter(type);
+    }
 
-    function doPauseStartLiveCount() {
-      dbreport.pauseStartLiveCount();
+    function doDeselectAllFilter(elm) {
+        dbreport.liveCountAction("stop");
+        dbreport._deselectAllFilter(elm);
+        dbreport.refreshModel();
+    }
+    function doStartLiveCount() {
+      dbreport.liveCountAction("start");
+    }
+    function doPauseLiveCount() {
+      dbreport.liveCountAction("pause");
+    }
+    function doStopLiveCount() {
+        dbreport.liveCountAction("stop");
     }
 
 
+
+    function handleFilterChange(elm) {
+        dbreport.liveCountAction("stop");
+        dbreport.handleFilterChange(elm);
+        dbreport.refreshModel();
+    }
+
+    function openFilter() {
+        $('#filterModal').modal({
+            inverted: true
+        })
+            .modal('show')
+        ;
+    }
 
     async function initReport() {
         if (window.neo4jDesktopApi) {
