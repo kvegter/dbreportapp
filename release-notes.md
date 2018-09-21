@@ -1,1 +1,2 @@
-* new: the Model Tab, showing the database model in a graph-visualization, with possibility to Filter.
+* Same color for labels in timeline, summary and schema
+* Improved Schema filtering

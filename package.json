@@ -1,7 +1,13 @@
 {
   "name": "neo4j-dbcount-report",
-  "version": "0.0.5",
-  "description": "Neo4j Database Count Report",
+  "version": "0.0.6",
+  "description": "Database Count Report",
+  "icons": [
+    {
+      "src": "dbcountreport_icon.png",
+      "type": "png"
+    }
+  ],
   "main": "index.html",
   "directories": {
     "lib": "lib"
