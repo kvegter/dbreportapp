@@ -1,4 +1,4 @@
-# neo4j-dbcount-report
+# neo4j-db-analyzer
 
 This is neo4j desktop app which analyses a neo4j database.
 

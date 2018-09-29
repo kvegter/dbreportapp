@@ -1,2 +1,1 @@
-* Same color for labels in timeline, summary and schema
-* Improved Schema filtering
+* renamed app from neo4j-dbcount-report to neo4j-db-analyzer 

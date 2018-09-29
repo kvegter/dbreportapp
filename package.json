@@ -1,7 +1,7 @@
 {
-  "name": "neo4j-dbcount-report",
-  "version": "0.0.6",
-  "description": "Database Count Report",
+  "name": "neo4j-db-analyzer",
+  "version": "0.0.7",
+  "description": "Count everything in the database",
   "icons": [
     {
       "src": "dbcountreport_icon.png",
