@@ -1,0 +1,15 @@
+{
+  "name": "neo4j-db-analyzer",
+  "version": "0.0.8",
+  "description": "Count everything in the database",
+  "homepage": "http://neo4j.com",
+  "icons": [
+    {
+      "src": "dbcountreport_icon.png",
+      "type": "png"
+    }
+  ],
+  "neo4jDesktop": {
+    "apiVersion": "^1.2.0"
+  }
+}

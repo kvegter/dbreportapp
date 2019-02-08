@@ -6,6 +6,8 @@
     <link href="vis/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
 
     <script src="lib/dbreport.js"></script>
+    <script src="lib/dbmodel.js"></script>
+    <script src="lib/livecount.js"></script>
     <script src="lib/neo4j-web.min.js"></script>
     <script src="lib/NeoAccessor.js"></script>
     <link rel="stylesheet" type="text/css" href="semanticui/semantic.css">
@@ -21,7 +23,7 @@
     <script src="d3/d3.min.js" charset="utf-8"></script>
     <script src="c3/c3.min.js"></script>
 
-    <title>Neo4j Database Count Report</title>
+    <title>Neo4j Database Analyzer</title>
     <!-- Report formatting styles-->
     <style type="text/css">
 
@@ -67,151 +69,380 @@
       }
 
 
+      :focus { /* get rid if browser behaviour blue line around select element for instance the network canvas */
+          outline: 0;
+      }
+
+
+      .ui.fullscreen.modal {/* Fix the center alignment of fullscreen modal */
+          left: 2.5% !important;
+      }
+
+
+
     </style>
 </head>
 <body>
-  <form class="ui form" onsubmit="return false">
-    <table>
-        <tr><td width="210px">Neo4j Desktop instance</td><td align="left"><div class="ui label" id="neoInstanceName"></div></td>
-            <td width="210px">Sample Treshold&nbsp;&nbsp;&nbsp;<a class="circular small blue ui label" onClick="dbreport.showSampleHelp();">?</a></td><td><input id="sampleTreshold" value="10000000"/></td>
-            <td width="210px">Max Sample Size</td><td><input id="sampleSize" value="1000000"/></td>
-            <td width="210px">Random Factor (between 0 and 1)</td><td><input id="randomFactor" value="0.3"/></td>
-        </tr>
-        <tr>
-            <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelProps" type="checkbox" /><Label>Analyze Node Properties</Label></div></td>
-            <td colspan="2"><div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" /><Label>Analyze Relationship Properties</Label></div></td>
-            <td colspan="2"><div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" /><Label>Check Label Combinations</Label></div></td>
-            <td colspan="2"><button class="ui basic button" onClick="openFilter()"><i class="icon filter"></i>Filter</button>
-            <button class="ui positive basic button" onClick="doReport();"><i class="icon play"></i>Analyze Database</button></td>
-    </table>
-<div id="helpDiv"></div>
-<br/>
-  <div id="testmessage"></div>
-  </form>
-  <!--  Modal Containers -->
-  <div class="ui modal" id="simpleModal">
-      <i class="close icon"></i>
-      <div class="header" id="modalHeader"></div>
-      <div class="content" id="modalContent"></div>
+        <!-- Main Tab -->
+<div class="container" style="max-width: 99%; margin: 1em auto;">
+    <div class="ui top attached tabular menu">
+        <a id="analyzedb" class="active item" data-tab="countdb">Analyze Database</a>
+        <a id="livecount" class="item" data-tab="livecount">Live Count</a>
+        <a id="modelwalker" class="item disabled" data-tab="modelwalker">Model</a>
+    </div>
+
+    <!-- Tab Analyze Database -->
+    <div id="appCountDB" class="ui bottom attached active tab segment" data-tab="countdb" style="height: 1000px; overflow:auto;font-size: .9em; ">
+        <form class="ui form" onsubmit="return false">
+            <table>
+                <tr valign="center">
+                    <td>
+                        <button class="ui positive compact basic icon button" onClick="doReport();"><i class="icon play"></i>Analyze Database</button>
+                    </td>
+                    <td>
+                        <table>
+                            <tr valign="center">
+                                <td>
+                                    <div class="ui checkbox"><input id="useLogScaleCnt" type="checkbox" checked="checked" title="Use Log Scale in the Bar Charts for Label and Relationship Type Counts" /><Label>Use Log Scale</Label></div>
+                                </td>
+                                <td>
+                                    <div class="ui checkbox"><input id="analyzeLabelProps" type="checkbox" onChange="dbreport.handleCountProps()"/><Label>Analyze Node Properties</Label></div>
+                                </td>
+                                <td>
+                                    <button id="btCountFilterLabel" class="ui disabled compact basic icon button" onClick="openModal('filterModalLabel')"><i class="icon filter"></i></button>
+                                </td>
+                                <td>
+                                    <div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" onChange="dbreport.handleCountProps()" /><Label>Analyze Relationship Properties</Label></div>
+                                </td>
+                                <td>
+                                    <button id="btCountFilterRelationship" class="ui disabled compact basic icon button" onClick="openModal('filterModalRelationship')"><i class="icon filter"></i></button>
+                                </td>
+                                <td>
+                                    <div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" onChange="dbreport.handleCountProps()" /><Label>Check Label Combinations</Label></div>
+                                </td>
+                                <td>
+                                    <button id="btCountTreshold" class="ui disabled compact basic icon button blue" onClick="openThreshold();"><i class="icon compress"></i>&nbsp;Sampling</button>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <div id="helpDiv"></div>
+            <br/>
+            <div id="testmessage"></div>
+        </form>
+
+        <div class="container" style="max-width: 100%;">
+
+            <div class="ui top attached tabular menu">
+                <a id="first" class="item" data-tab="first">Summary</a>
+                <a id="second" class="item" data-tab="second">Label Details</a>
+                <a id="third" class="item" data-tab="third">Label Combinations</a>
+                <a id="fourth" class="item" data-tab="fourth">Relationship Details</a>
+                <a id="vijf" class="item" data-tab="vijf">Indexes</a>
+                <a id="zes" class="item" data-tab="zes">Constraints</a>
+                <a id="zeven" class="item" data-tab="zeven">Log</a>
+            </div>
+            <div id="tabSummary" class="ui bottom attached tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  ">
+                <div id="reportHeader"></div>
+                <div id="appSummary"></div>
+            </div>
+            <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em; "></div>
+            <div id="appLabelCombinations" class="ui bottom attached tab segment" data-tab="third" style="height: 800px; overflow:auto;font-size: .9em;"></div>
+            <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; "></div>
+            <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; "></div>
+            <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; "></div>
+            <div id="appLog" class="ui bottom attached tab segment" data-tab="zeven" style="height: 800px; overflow:auto;font-size: .9em; "></div>
+        </div>
+
+    </div>
+    <!-- Tab Live Count -->
+    <div id="appLiveCountContainer" class="ui bottom attached tab segment" data-tab="livecount" style="height: 800px; overflow:auto;font-size: .9em;">
+        <form class="ui form" onsubmit="return false">
+            <table>
+                <tbody>
+                <tr>
+                    <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Refresh Counts (sec)</div><input id="liveViewRefreshRate" type="number" value=10 min=5 /></div></td>
+                    <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Time Window (hours)</div><input id="timeWindow" type="number" value=1 min=1 /></div></td>
+                    <td><button id="btStartLC" class="ui positive compact basic icon button" onClick="doStartLiveCount();"><i class="icon play"></i></button></td>
+                    <td><button id="btPauseLC" class="ui positive disabled basic compact icon button" onClick="doPauseLiveCount();"><i class="icon pause"></i></button></td>
+                    <td><button id="btStopLC" class="ui negative disabled basic compact icon button" onClick="doStopLiveCount();"><i class="icon stop"></i></button></td>
+                    <td><button id="btLabelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountLabels')"><i class="icon filter"></i>Labels</button></td>
+                    <td><button id="btRelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountRelations')"><i class="icon filter"></i>Relationship Types</button></td>
+                    <td><div class="ui checkbox"><input id="useLogScale" type="checkbox" onChange="doScaleChange();"/><Label>Use Log Scale</Label></div></td>
+                    <td><div class="ui basic yellow label"><p>Tip: Click on the chart to see the totals on a specific time</p></div></td>
+                </tr>
+                </tbody>
+            </table>
+        </form>
+        Label Live Count<hr/>
+        <div id="clabellivecount"></div>
+        <br/>Relationship Live Count<hr/>
+        <div id="crellivecount"></div>
+    </div>
+
+    <!-- Tab Model Walker -->
+
+
+    <div id="appWalker"  class="ui bottom attached tab segment" data-tab="modelwalker" style="height: 800px; overflow:auto;font-size: .9em; ">
+        <table>
+            <tr>
+                <td width="43px" valign="top">
+                    <div class="ui form">
+                        <button id="btH_ChooseLabel" class="ui toggle compact basic icon button"  onClick="if (dbreport.dbinfo) openWalkerLabels();"><label style="font-size: 0.8em"><i class="icon big filter"></i>Labels</label></button>
+                        <br/><br/>
+                        <button id="btH_ChooseAll" class="ui toggle compact basic icon button"  onClick="if (dbreport.dbinfo)  showCompleteSchema();"><label style="font-size: 0.8em; width : 100%;"><i class="icon big expand arrows alternate"></i><br/>Show All</label></button>
+                        <br/><br/>
+                        <button id="btH_ClearWalker" class="ui toggle compact basic icon button"  onClick="if (dbreport.dbinfo)  dbmodel.walkerClear();"><label style="font-size: 0.8em"><i class="icon big eraser"></i>Clear</label></button>
+                        <br/><br/>
+                        <button id="btH_UDViz" class="ui basic disabled compact icon button" onClick="if (dbreport.dbinfo)  dbmodel.changeLayout('UD');"><image src="hierarchy-td.png" width="43px"></image></button>
+                        <button id="btH_DUViz" class="ui basic compact icon button" onClick="if (dbreport.dbinfo)  dbmodel.changeLayout('DU');"><image src="hierarchy-dt.png" width="43px"></image></button>
+                        <button id="btH_LRViz" class="ui basic compact icon button" onClick="if (dbreport.dbinfo)  dbmodel.changeLayout('LR');"><image src="hierarchy-lr.png" width="43px"></image></button>
+                        <button id="btH_RLViz" class="ui basic compact icon button" onClick="if (dbreport.dbinfo) dbmodel.changeLayout('RL');"><image src="hierarchy-rl.png" width="43px"></image></button>
+                        <br/><br/>
+                        <button id="btH_DirViz" class="ui disabled toggle compact basic icon button"  onClick="if (dbreport.dbinfo)  dbmodel.changeLayout('directed');"><label style="font-size: 0.8em">Directed</label></button>
+                        <button id="btH_HubSizeViz" class="ui toggle compact basic icon button"  onClick="if (dbreport.dbinfo) dbmodel.changeLayout('hubsize');"><label style="font-size: 0.8em">Hub Size</label></button>
+                        <br/>
+                    </div>
+                </td>
+                <td valign="top" width="601px"><div id="walkerContext"></div><div id="graphIDwalker" style="width:1300px; height:735px; border-style: none; border: 0px"></div></td>
+
+                <td valign="top" width="300px"><div id="propsIDwalker" style="width: 300px; height: 100% ;" ></div></td>
+            </tr>
+        </table>
+        <button class="ui compact basic button" onclick="if (dbreport.dbinfo) dbmodel.showHelp()"><label><i class="icon big blue question circle outline"></i></label></button>
+    </div>
+</div>
+<!--  Modal Containers -->
+
+<!--  Generic Modal Container -->
+
+<div class="ui modal" id="simpleModal">
+    <div class="header" id="modalHeader"></div>
+    <div class="content" id="modalContent"></div>
+    <div class="actions">
+        <div class="ui approve button">Close</div>
+    </div>
+</div>
+
+
+<!-- Yes No Modal Containter -->
+<div class="ui modal" id="simpleYesNoModal">
+    <div class="header" id="simpleYesNoModalHeader"></div>
+    <div class="content" id="simpleYesNodModalContent"></div>
+    <div class="actions">
+        <div class="ui red approve inverted button" id="simpleYesNoModalOk">Ok</div>
+        <div class="ui green cancel inverted button">Cancel</div>
+    </div>
+</div>
+
+
+<!--  Modal For Sampling Thresholds -->
+<div class="ui modal" id="tresholdModal">
+    <div class="header">Sampling</div>
+    <div class="content">
+        <p>Sampling is used to determine Label Combinations, Node Properties and Relationship Properties when the<br/> specific counts are higher than the Sample Treshold:</p>
+        <div class="ui list">
+            <div class="item">
+                <div class="content">
+                    <div class="header">Label Combinations</div>
+                    <div class="description">When the Node Count is &gt; Sample Treshold then sampling is used</div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="content">
+                    <div class="header">Node Properties</div>
+                    <div class="description">When the Label Node Count is &gt; Sample Treshold then sampling is used</div>
+                </div>
+            </div>
+            <div class="item">
+                <div class="content">
+                    <div class="header">Relationship Properties</div>
+                    <div class="description">When the Relationship Type Count is &gt; Sample Treshold then sampling is used</div>
+                </div>
+            </div>
+        </div>
+
+        <br/>
+        <hr/>
+        <table>
+            <tr>
+                <td>
+                    <div>Sample Treshold</div>
+                    <div><input id="sampleTreshold" value="10000000"/></div>
+                </td>
+                <td>
+                    <div>Max Sample Size</div>
+                    <div><input id="sampleSize" value="1000000"/></div>
+                </td>
+                <td>
+                    <div>Random Factor (between 0 and 1)</div>
+                    <div><input id="randomFactor" value="0.3"/></div>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+    <div class="actions">
+        <div class="ui approve button">Close</div>
+    </div>
+</div>
+
+
+
+<!--  Modal For Property Filter Label-->
+
+<div class="ui fullscreen modal" id="filterModalLabel">
+  <div class="header">Label Filter</div>
+  <div class="content">
+      <div class='sixteen wide column'>When you select a label then the properties of the Nodes with that label are analyzed.</div>
+      <div class='sixteen wide column'><table><tr>
+          <td><button class="compact ui basic button" onClick="doResetFilter('label');"><i class="icon check circle outline"></i>All</button></td>
+          <td><button class="compact ui basic button" onClick="doDeselectAllFilter('label');"><i class="icon circle outline"></i>All</button></td>
+      </tr></table></div>
+      <div id="labelFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
   </div>
+  <div class="actions">
+      <div class="ui approve button">Close</div>
+  </div>
+</div>
 
-  <div class="ui fullscreen modal" id="filterModal">
 
-      <div class="header">Filter Definition</div>
+<!--  Modal For Property Filter Relationship-->
+
+<div class="ui fullscreen modal" id="filterModalRelationship">
+    <div class="header">Relationship Type Filter</div>
+    <div class="content">
+        <div class='sixteen wide column'>When you select a Relationship Type then the properties of the relationships with that Relationship Type are analyzed.</div>
+        <div class='sixteen wide column'>
+            <table><tr>
+                <td><button class="compact ui basic button" onClick="doResetFilter('rel');"><i class="icon check circle outline"></i>All</button></td>
+                <td><button class="compact ui basic button" onClick="doDeselectAllFilter('rel');"><i class="icon circle outline"></i>All</button></td>
+            </tr></table>
+        </div>
+        <div id="reltypeFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;">
+
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui approve button">Close</div>
+    </div>
+</div>
+
+
+<!--  Modal For Live Count Filter Labels and Relations Separate -->
+
+<div class="ui fullscreen modal" id="filterLiveCountLabels">
+
+    <div class="header">Live Count Label Filter</div>
+    <div class="content">
+        <div class='ui grid'>
+            <div class='sixteen wide column'>Select the Labels to follow with the Live Count</div>
+        </div>
+        <table><tr>
+            <td><button class="compact ui basic button" onClick="doResetFilterLive('label');"><i class="icon check circle outline"></i>All</button></td>
+            <td><button class="compact ui basic button" onClick="doDeselectAllFilterLive('label');"><i class="icon circle outline"></i>All</button></td>
+        </tr></table>
+        <div id="labelFilterLive" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;">
+
+        </div>
+    </div>
+    <div class="actions">
+        <div class="ui approve button">Close</div>
+    </div>
+</div>
+
+
+
+<div class="ui fullscreen modal" id="filterLiveCountRelations">
+
+    <div class="header">Live Count Relationship Type Filter</div>
+    <div class="content">
+        <div class='ui grid'>
+            <div class='sixteen wide column'>Select the Relationship Types to follow with the Live Count</div>
+        </div>
+        <table><tr>
+            <td><button class="compact ui basic button" onClick="doResetFilterLive('rel');"><i class="icon check circle outline"></i>All</button></td>
+            <td><button class="compact ui basic button" onClick="doDeselectAllFilterLive('rel');"><i class="icon circle outline"></i>All</button></td>
+        </tr></table>
+        <div id="reltypeFilterLive" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+    </div>
+    <div class="actions">
+        <div class="ui approve button">Close</div>
+    </div>
+</div>
+
+
+<!-- Modal for Walker Labels -->
+
+  <div class="ui fullscreen modal" id="labelSelector">
+
+      <div class="header">Select Label(s)</div>
       <div class="content">
           <div class='ui grid'>
-              <div class='sixteen wide column'>The Label and RelationshipType filter is used in the Live Count, Model and if applicable in analyzing the properties of Nodes and Relationships. By default all the Labels and Relationships are selected</div>
+              <div class='sixteen wide column'>Select Label(s) to show in the Model Walker</div>
+              <div class='sixteen wide column'>
+                  <table><tr>
+                      <td><button class="compact ui basic button" onClick="doSelectAllLabels();"><i class="icon check circle outline"></i>All</button></td>
+                      <td><button class="compact ui basic button" onClick="doDeselectAllLabels();"><i class="icon circle outline"></i>All</button></td>
+                  </tr></table>
+              </div>
           </div>
-          <div class="ui top attached tabular menu">
-              <a id="lblfltr" class="active item" data-tab="lblfltr">Labels</a>
-              <a id="relfltr" class="item" data-tab="relfltr">Relationship Types</a>
-          </div>
-          <div class="ui bottom attached active tab segment" data-tab="lblfltr" >
-              <table><tr>
-                  <td><button class="compact ui basic button" onClick="doResetFilter('label');"><i class="icon check circle outline"></i>All</button></td>
-                  <td><button class="compact ui basic button" onClick="doDeselectAllFilter('label');"><i class="icon circle outline"></i>All</button></td>
-              </tr></table>
-              <div id="labelFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
-          </div>
-          <div class="ui bottom attached tab segment" data-tab="relfltr" >
-              <table><tr>
-                  <td><button class="compact ui basic button" onClick="doResetFilter('rel');"><i class="icon check circle outline"></i>All</button></td>
-                  <td><button class="compact ui basic button" onClick="doDeselectAllFilter('rel');"><i class="icon circle outline"></i>All</button></td>
-              </tr></table>
-              <div id="reltypeFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
-          </div>
+          <div id="walkerLabelSelector" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
       </div>
       <div class="actions">
           <div class="ui approve button">Close</div>
       </div>
   </div>
 
+<!-- Modal for Walker Relations  relSelector -->
+        <div class="ui fullscreen modal" id="relSelector">
+
+            <div class="header">Select Relationship Type(s)</div>
+            <div class="content">
+                <div class='ui grid'>
+                    <div class='sixteen wide column'>Select Relationship Types(s) to show in the Model Walker</div>
+                    <div class='sixteen wide column'>
+                        <table><tr>
+                            <td><button class="compact ui basic button" onClick="doSelectAllRelTypes();"><i class="icon check circle outline"></i>All</button></td>
+                            <td><button class="compact ui basic button" onClick="doDeselectAllRelTypes();"><i class="icon circle outline"></i>All</button></td>
+                        </tr></table>
+                    </div>
+                </div>
+                <div id="walkerRelSelector" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+            </div>
+            <div class="actions">
+                <div class="ui approve button">Close</div>
+            </div>
+        </div>
 
 
-  <div class="ui top attached tabular menu">
-      <a id="livecount" class="active item" data-tab="livecount">Live Count</a>
-      <a id="first" class="item" data-tab="first">Summary</a>
-      <a id="schema" class="item" data-tab="schema">Model</a>
-      <a id="second" class="item" data-tab="second">Label Details</a>
-      <a id="third" class="item" data-tab="third">Label Combinations</a>
-      <a id="fourth" class="item" data-tab="fourth">Relationship Details</a>
-      <a id="vijf" class="item" data-tab="vijf">Indexes</a>
-      <a id="zes" class="item" data-tab="zes">Constraints</a>
-      <a id="zeven" class="item" data-tab="zeven">Log</a>
-  </div>
-  <div id="appLiveCountContainer" class="ui bottom attached active tab segment" data-tab="livecount" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;">
-      <form class="ui form" onsubmit="return false">
-          <table>
-              <tbody>
-              <tr>
-                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Refresh Counts (sec)</div><input id="liveViewRefreshRate" type="number" value=10 min=5 /></div></td>
-                  <td width="250px"><div style="width : 100px;" class="ui labeled small input"><div class="ui basic label">Time Window (hours)</div><input id="timeWindow" type="number" value=1 min=1 /></div></td>
-                  <td><button id="btStartLC" class="ui positive compact basic icon button" onClick="doStartLiveCount();"><i class="icon play"></i></button></td>
-                  <td><button id="btPauseLC" class="ui positive disabled basic compact icon button" onClick="doPauseLiveCount();"><i class="icon pause"></i></button></td>
-                  <td><button id="btStopLC" class="ui negative disabled basic compact icon button" onClick="doStopLiveCount();"><i class="icon stop"></i></button></td>
-                  <td><div class="ui checkbox"><input id="useLogScale" type="checkbox" onChange="doScaleChange();"/><Label>Use Log Scale</Label></div></td>
-                  <td><div class="ui label"><p>Tip: Click on the chart to see the totals on a specific time</p></div></td>
-              </tr>
-              </tbody>
-          </table>
-      </form>
-      Label Live Count<hr/>
-      <div id="clabellivecount"></div>
-      <br/>Relationship Live Count<hr/>
-      <div id="crellivecount"></div>
-  </div>
 
-  <div id="tabSummary" class="ui bottom attached tab segment" data-tab="first" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;">
-      <div id="reportHeader"></div>
-      <div id="appSummary"></div>
-  </div>
-  <div id="appSchema" class="ui bottom attached tab segment" data-tab="schema" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;">
-          <table>
-              <tr><td width="43px" valign="top">
-                  <div class="ui form">
-<!--                      <button id="btGraphVis" class="ui basic compact icon button" onClick="dbreport.changeLayout('graph');"><image src="graph.png" width="43px" height="43px" /></button>
-                      <br/><br/> -->
-                      <button id="btH_UDViz" class="ui basic disabled compact icon button" onClick="dbreport.changeLayout('UD')"><image src="hierarchy-td.png" width="43px"></image></button>
-                      <button id="btH_DUViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('DU')"><image src="hierarchy-dt.png" width="43px"></image></button>
-                      <button id="btH_LRViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('LR')"><image src="hierarchy-lr.png" width="43px"></image></button>
-                      <button id="btH_RLViz" class="ui basic compact icon button" onClick="dbreport.changeLayout('RL')"><image src="hierarchy-rl.png" width="43px"></image></button>
-                      <br/><br/>
-                      <button id="btH_DirViz" class="ui disabled toggle compact icon button"  onClick="dbreport.changeLayout('directed')"><label style="font-size: 0.8em">Directed</label></button>
-                      <button id="btH_HubSizeViz" class="ui toggle compact icon button"  onClick="dbreport.changeLayout('hubsize')"><label style="font-size: 0.8em">Hub Size</label></button>
-                      <br/><br/>
-                      <div class="ui checkbox"><input id="cb_FR" type="checkbox" title="Force Relationships: relationships are always shown including connecting labels."/><label>FR</label></div>
-                      <br/><br/>
-                      <button id="btRefresh" class="ui basic compact icon button"  onClick="dbreport.refreshModel();"><image src="refresh.png" width="43px"></image></button>
-                  </div>
-                  <td valign="top" width="601px"><div id="graphID" style="width:1100px; height:600px"></div></td>
-                  <td valign="top" width="300px"><div id="propsID" style="width: 300px; height: 100% ;" ></div></td>
-              </tr>
-          </table>
-      </div>
 
-  </div>
-  <div id="appLabelDetails" class="ui bottom attached tab segment" data-tab="second" style="height: 800px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
-  <div id="appLabelCombinations" class="ui bottom attached tab segment" data-tab="third" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appRelationshipDetails" class="ui bottom attached tab segment" data-tab="fourth" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appIndexes" class="ui bottom attached tab segment" data-tab="vijf" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-  <div id="appConstraints" class="ui bottom attached tab segment" data-tab="zes" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
-
-  <div id="appLog" class="ui bottom attached tab segment" data-tab="zeven" style="height: 800px; overflow:auto;font-size: .9em; margin: 1em 0;"></div>
 
 
   <script>
       var dbreport;
-      var outp;
+      var lcm;
+      var dbmodel;
+      var livecount;
+      // activating tab menu's
       $('.menu .item')
-          .tab({'onLoad':function(e){if (e == "schema") { dbreport._redrawViz(); }}})
+          .tab({'onLoad':function(e){if (e == "modelwalker") { dbmodel._redrawWalkerViz(); }   }})
       ;
+      // activating accordion
+      $('.ui.accordion')
+          .accordion()
+      ;
+
     async function doReport() {
     	let msg = document.getElementById("testmessage"); 
     	if (dbreport) {
     		// analysb
             // rcds = dbreport.analyseDB("reportContainer","localhost", "neo4j", 10000000, 1000000);
             //dbreport.runReport("reportContainer");
-            let aInstanceName = document.getElementById("neoInstanceName").innerText;
+            //let aInstanceName = document.getElementById("neoInstanceName").innerText;
             let aSampleTreshold = Number(document.getElementById("sampleTreshold").value);
 
             let sSampleSize = Number(document.getElementById("sampleSize").value);
@@ -228,51 +459,117 @@
 	    	msg.innerHTML = 'no report available';
     	}
     }
-    function doScaleChange() {
-        dbreport.doScaleChange();
-    }
+
     function doResetFilter(type) {
-        dbreport.liveCountAction("stop");
-        dbreport._initFilter(type);
+        dbreport._initFilter(type, true);
     }
+
 
     function doDeselectAllFilter(elm) {
-        dbreport.liveCountAction("stop");
         dbreport._deselectAllFilter(elm);
-        dbreport.refreshModel();
     }
+
+    // live functions
+    function doDeselectAllFilterLive(elm) {
+      livecount._deselectAllFilterLive(elm);
+    }
+
+    function doScaleChange() {
+        livecount.doScaleChange();
+    }
+
+    function doResetFilterLive(type) {
+        livecount._initFilterLive(type);
+    }
+
     function doStartLiveCount() {
-      dbreport.liveCountAction("start");
+        livecount.liveCountAction("start");
     }
     function doPauseLiveCount() {
-      dbreport.liveCountAction("pause");
+        livecount.liveCountAction("pause");
     }
     function doStopLiveCount() {
-        dbreport.liveCountAction("stop");
+        livecount.liveCountAction("stop");
+    }
+    function handleLiveChange(elm) {
+        livecount.handleLiveChange(elm);
     }
 
+    // model walker
+    function doSelectAllLabels() {
+        dbmodel._selectAllLabels();
+    }
 
+    function doDeselectAllLabels() {
+        dbmodel._deselectAllFilter("label");
+    }
+
+    function doSelectAllRelTypes() {
+        dbmodel._selectAllRelTypes();
+    }
+
+    function doDeselectAllRelTypes() {
+        dbmodel._deselectAllFilter("rel");
+    }
+
+    function showCompleteSchema() {
+        dbmodel.showCompleteSchema();
+    }
+
+    // count properties
 
     function handleFilterChange(elm) {
-        dbreport.liveCountAction("stop");
         dbreport.handleFilterChange(elm);
-        dbreport.refreshModel();
     }
 
-    function openFilter() {
-        $('#filterModal').modal({
+
+    function openModal(id) {
+        let key = "#" + id;
+        $(key).modal({
             inverted: true
         })
             .modal('show')
         ;
     }
 
-    async function initReport() {
+    function openThreshold() {
+        $('#tresholdModal').modal({
+            inverted: true
+        })
+            .modal('show')
+        ;
+    }
+
+      function openWalkerLabels() {
+          $('#labelSelector').modal({
+              inverted: true
+          })
+              .modal('show')
+          ;
+      }
+
+      function openWalkerRelations() {
+          $('#relSelector').modal({
+              inverted: true
+          })
+              .modal('show')
+          ;
+      }
+
+      async function initApp() {
         if (window.neo4jDesktopApi) {
             dbreport =  new DBReport(window.neo4jDesktopApi);
-            dummy = await dbreport.init();
+            lcm = new LabelColorMap();
+            let dummy = await dbreport.init();
+
             if (dbreport.graphdb) {
-                document.getElementById("neoInstanceName").innerText = dbreport.graphdb.name;
+                document.title = "Neo4j Database Analyzer: " + dbreport.graphdb.name;
+                // initialize the DBModel
+                dbmodel = new DBModel(window.neo4jDesktopApi, dbreport.nea);
+                dbmodel.init();
+                livecount = new LiveCount(window.neo4jDesktopApi, dbreport.nea);
+                livecount.init();
+
             } else {
                 document.getElementById("appSummary").innerHTML = "<div class='ui warning message'><div class='header'>WARNING</div><p>No active Database, start a database in the Neo4j Desktop first</p></div>";
             }
@@ -280,7 +577,7 @@
             document.getElementById("appSummary").innerHTML = '<div class=\'ui red message\'><div class=\'header\'>ERROR</div><p>no desktop api available</p></div>';
         }
     }
-    initReport();
+    initApp();
 </script>
 </body>
 </html>
