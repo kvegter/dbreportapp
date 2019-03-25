@@ -127,7 +127,7 @@ In this tab you can see all the details of a Relationship Type by clicking on th
 
 ### Indexes, Constraints and Log
 
-For convenienve the Indexes and Constraints of the database are listed here. The Log tab contains the logging of the analyzis which is shown in the Summary tab during analyzing.
+For convenience the Indexes and Constraints of the database are listed here. The Log tab contains the logging of the analyzis which is shown in the Summary tab during analyzing.
 
 ## Live Count
 
