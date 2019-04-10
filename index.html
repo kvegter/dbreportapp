@@ -106,16 +106,10 @@
                                     <div class="ui checkbox"><input id="useLogScaleCnt" type="checkbox" checked="checked" title="Use Log Scale in the Bar Charts for Label and Relationship Type Counts" /><Label>Use Log Scale</Label></div>
                                 </td>
                                 <td>
-                                    <div class="ui checkbox"><input id="analyzeLabelProps" type="checkbox" onChange="dbreport.handleCountProps()"/><Label>Analyze Node Properties</Label></div>
+                                    <button id="btCountFilterLabel" class="ui compact basic icon button" onClick="openModal('filterModalLabel')"><i class="icon filter"></i><label id="anp">Analyze Label Properties</label></button>
                                 </td>
                                 <td>
-                                    <button id="btCountFilterLabel" class="ui disabled compact basic icon button" onClick="openModal('filterModalLabel')"><i class="icon filter"></i></button>
-                                </td>
-                                <td>
-                                    <div class="ui checkbox"><input id="analyzeRelProps" type="checkbox" onChange="dbreport.handleCountProps()" /><Label>Analyze Relationship Properties</Label></div>
-                                </td>
-                                <td>
-                                    <button id="btCountFilterRelationship" class="ui disabled compact basic icon button" onClick="openModal('filterModalRelationship')"><i class="icon filter"></i></button>
+                                    <button id="btCountFilterRelationship" class="ui compact basic icon button" onClick="openModal('filterModalRelationship')"><i class="icon filter"></i><Label id="arp">Analyze Relationship Type Properties</Label></button>
                                 </td>
                                 <td>
                                     <div class="ui checkbox"><input id="analyzeLabelCombo" type="checkbox" onChange="dbreport.handleCountProps()" /><Label>Check Label Combinations</Label></div>
@@ -168,8 +162,8 @@
                     <td><button id="btStartLC" class="ui positive compact basic icon button" onClick="doStartLiveCount();"><i class="icon play"></i></button></td>
                     <td><button id="btPauseLC" class="ui positive disabled basic compact icon button" onClick="doPauseLiveCount();"><i class="icon pause"></i></button></td>
                     <td><button id="btStopLC" class="ui negative disabled basic compact icon button" onClick="doStopLiveCount();"><i class="icon stop"></i></button></td>
-                    <td><button id="btLabelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountLabels')"><i class="icon filter"></i>Labels</button></td>
-                    <td><button id="btRelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountRelations')"><i class="icon filter"></i>Relationship Types</button></td>
+                    <td><button id="btLabelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountLabels')"><i class="icon filter"></i><label id="lcl">Labels</label></button></td>
+                    <td><button id="btRelCountFilter" class="ui compact basic icon button" onClick="openModal('filterLiveCountRelations')"><i class="icon filter"></i><label id="lcr">Relationship Types</label></button></td>
                     <td><div class="ui checkbox"><input id="useLogScale" type="checkbox" onChange="doScaleChange();"/><Label>Use Log Scale</Label></div></td>
                     <td><div class="ui basic yellow label"><p>Tip: Click on the chart to see the totals on a specific time</p></div></td>
                 </tr>
@@ -301,7 +295,7 @@
           <td><button class="compact ui basic button" onClick="doResetFilter('label');"><i class="icon check circle outline"></i>All</button></td>
           <td><button class="compact ui basic button" onClick="doDeselectAllFilter('label');"><i class="icon circle outline"></i>All</button></td>
       </tr></table></div>
-      <div id="labelFilter" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
+      <div id="labelFilterReport" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
   </div>
   <div class="actions">
       <div class="ui approve button">Close</div>
@@ -341,7 +335,7 @@
             <div class='sixteen wide column'>Select the Labels to follow with the Live Count</div>
         </div>
         <table><tr>
-            <td><button class="compact ui basic button" onClick="doResetFilterLive('label');"><i class="icon check circle outline"></i>All</button></td>
+            <td><button class="compact ui basic button" onClick="doResetFilterLive('label', true);"><i class="icon check circle outline"></i>All</button></td>
             <td><button class="compact ui basic button" onClick="doDeselectAllFilterLive('label');"><i class="icon circle outline"></i>All</button></td>
         </tr></table>
         <div id="labelFilterLive" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;">
@@ -363,7 +357,7 @@
             <div class='sixteen wide column'>Select the Relationship Types to follow with the Live Count</div>
         </div>
         <table><tr>
-            <td><button class="compact ui basic button" onClick="doResetFilterLive('rel');"><i class="icon check circle outline"></i>All</button></td>
+            <td><button class="compact ui basic button" onClick="doResetFilterLive('rel', true);"><i class="icon check circle outline"></i>All</button></td>
             <td><button class="compact ui basic button" onClick="doDeselectAllFilterLive('rel');"><i class="icon circle outline"></i>All</button></td>
         </tr></table>
         <div id="reltypeFilterLive" style="height: 400px; overflow:auto;font-size: .9em;  margin: 1em 0;"></div>
@@ -448,9 +442,16 @@
             let sSampleSize = Number(document.getElementById("sampleSize").value);
 
             let aRandomFactor = Number(document.getElementById("randomFactor").value);
-
-            let analyzeLabelProps = document.getElementById("analyzeLabelProps").checked;
-            let analyzeRelProps = document.getElementById("analyzeRelProps").checked;
+            let selectedLabels = 0;
+            let selectedRelTypes = 0;
+            if (dbreport.labelFilter && dbreport.labelFilter.length) {
+                selectedLabels = dbreport.labelFilter.length;
+            }
+            if (dbreport.relTypeFilter && dbreport.relTypeFilter.length) {
+                selectedRelTypes = dbreport.relTypeFilter.length;
+            }
+            let analyzeLabelProps = selectedLabels > 0;
+            let analyzeRelProps = selectedRelTypes > 0;
             let analyzeLabelCombo = document.getElementById("analyzeLabelCombo").checked;
 
             let d1 = await dbreport.analyseDB(aSampleTreshold, sSampleSize, aRandomFactor, analyzeLabelProps, analyzeRelProps, analyzeLabelCombo  );
@@ -478,8 +479,8 @@
         livecount.doScaleChange();
     }
 
-    function doResetFilterLive(type) {
-        livecount._initFilterLive(type);
+    function doResetFilterLive(type, doall) {
+        livecount._initFilterLive(type, doall);
     }
 
     function doStartLiveCount() {
@@ -520,6 +521,7 @@
 
     function handleFilterChange(elm) {
         dbreport.handleFilterChange(elm);
+
     }
 
 

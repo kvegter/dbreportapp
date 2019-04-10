@@ -1,6 +1,6 @@
 {
   "name": "neo4j-db-analyzer",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "description": "Count everything in the database",
   "icons": [
     {

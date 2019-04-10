@@ -3,8 +3,10 @@
 The neo4j desktop app helps you to analyze a Neo4j database quickly.  
 
 <img src="toolheader.png" />
+
   
-The application has three main tools:  
+The application has three main tools: 
+ 
 * Analyze Database   
   Counts Node, Relationships, Labels, Relationship Types
 
