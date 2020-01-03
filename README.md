@@ -1,21 +1,24 @@
 # neo4j-db-analyzer
 
-The neo4j desktop app helps you to analyze a Neo4j database quickly.  
+The neo4j desktop app helps you to analyze a Neo4j database quickly. 
+
+In version 1.0.1 and higher it is possible to analyze Neo4j version 4 servers. 
+In that case there will be a tab per database with the database analyzer in it. 
 
 <img src="toolheader.png" />
 
   
 The application has three main tools: 
  
-* Analyze Database   
+* __Analyze Database__   
   Counts Node, Relationships, Labels, Relationship Types
 
 
-* Live Count    
+* __Live Count__    
   Live Count of #Nodes per Label and #Relationships per Relationship Type
 
 
-* Model  
+* __Model__  
   Explore the Database Schema 
   
 

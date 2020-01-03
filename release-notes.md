@@ -1,4 +1,4 @@
-### 1.1.0
+### 1.0.1
 
 * Improved model visualization
 * multi db support (neo4j version 4)
