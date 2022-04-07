@@ -1,3 +1,10 @@
+g### 1.0.2
+
+* Improved login form
+* UI improvements
+* Export Summary: an overview of all the counts
+* Export Model: export the model definition in an experimental json format, this may change in the future
+
 ### 1.0.1
 
 * Improved model visualization
