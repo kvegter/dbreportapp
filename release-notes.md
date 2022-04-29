@@ -1,4 +1,4 @@
-g### 1.0.2
+### 1.0.2
 
 * Improved login form
 * UI improvements

@@ -1,6 +1,6 @@
 {
   "name": "neo4j-db-analyzer",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Count everything in the database",
   "homepage": "https://github.com/kvegter/dbreportapp/blob/master/README.md",
   "icons": [
