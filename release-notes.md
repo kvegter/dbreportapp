@@ -1,3 +1,8 @@
+### 1.0.3
+
+* Improved Login Form
+* Model Visualisation improvements
+
 ### 1.0.2
 
 * Improved login form
