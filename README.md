@@ -2,7 +2,7 @@
 
 The neo4j desktop app helps you to analyze a Neo4j database quickly. 
 
-In version 1.0.1 and higher it is possible to analyze Neo4j version 4 servers. 
+In version 1.0.1 and higher it is possible to analyze Neo4j version 4+ servers. 
 In that case there will be a tab per database with the database analyzer in it. 
 
 <img src="toolheader.png" />

@@ -1,3 +1,7 @@
+### 1.0.4
+
+* fixes in the summary for neo4j v5
+
 ### 1.0.3
 
 * Improved Login Form
